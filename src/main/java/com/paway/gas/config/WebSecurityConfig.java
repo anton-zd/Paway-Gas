@@ -20,12 +20,12 @@ public class WebSecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests((requests) -> requests
-                .requestMatchers("/login", "/style.css", "/responsive.css", "/favicon.ico").permitAll()
+                .requestMatchers("/login", "/admin-panel.html", "/style.css", "/responsive.css", "/favicon.ico").permitAll()
                 .anyRequest().authenticated()
             )
             .formLogin((form) -> form
                 .loginPage("/login")
-                .defaultSuccessUrl("/dashboard", true)
+                .defaultSuccessUrl("/admin-panel.html", true)
                 .permitAll()
             )
             .logout((logout) -> logout.permitAll());

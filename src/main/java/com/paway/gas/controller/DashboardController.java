@@ -27,7 +27,7 @@ public class DashboardController {
 
     @GetMapping("/")
     public String root() {
-        return "redirect:/dashboard";
+        return "redirect:/admin-panel.html";
     }
 
     @GetMapping("/dashboard")

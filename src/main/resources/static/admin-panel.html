@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Paway Gas | Admin Panel</title>
+
+  <!-- Bootstrap 5 para tablas, formularios, botones y modal -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- FontAwesome para iconografía del panel -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+
+  <style>
+    :root {
+      --nav-bg: #0a192f;
+      --page-bg: #f0f2f5;
+      --card-border: #d8e1ed;
+      --accent: #0052cc;
+      --accent-2: #174ea6;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --shadow-soft: 0 10px 25px rgba(15, 23, 42, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--page-bg);
+      color: var(--text-main);
+    }
+
+    /* Arquitectura SPA Fake: cada sección es una "vista" renderizada en el navegador.
+       No hay rutas reales ni recarga completa; solo ocultamos y mostramos bloques. */
+    .view {
+      display: none;
+      animation: fadeIn 0.18s ease-out;
+    }
+
+    .view.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .topbar {
+      background: var(--nav-bg);
+      color: #fff;
+      box-shadow: 0 2px 0 rgba(255,255,255,0.04);
+    }
+
+    .brand-badge {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      background: #ff9800;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #111827;
+      font-size: 1.1rem;
+      box-shadow: 0 10px 20px rgba(255, 152, 0, 0.22);
+    }
+
+    .nav-link.app-link {
+      color: rgba(255,255,255,.85);
+      border-radius: 999px;
+      margin-right: .35rem;
+      padding: .55rem .95rem;
+      font-weight: 600;
+    }
+
+    .nav-link.app-link:hover,
+    .nav-link.app-link.active {
+      background: rgba(255,255,255,.08);
+      color: #fff;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .metric-card {
+      background: #fff;
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      box-shadow: var(--shadow-soft);
+      min-height: 132px;
+    }
+
+    .metric-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      color: #fff;
+    }
+
+    .metric-icon.blue { background: #1d4ed8; }
+    .metric-icon.orange { background: #f59e0b; }
+    .metric-icon.green { background: #16a34a; }
+    .metric-icon.red { background: #ef4444; }
+
+    .section-card {
+      background: #fff;
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .table thead th {
+      background: #f8fafc;
+      color: #334155;
+      font-weight: 700;
+      border-bottom: 1px solid #e2e8f0 !important;
+    }
+
+    .table td, .table th {
+      vertical-align: middle;
+    }
+
+    .search-input {
+      border-radius: 14px;
+      border: 1px solid #dbe3ee;
+      padding: .78rem 1rem;
+      box-shadow: inset 0 1px 2px rgba(15,23,42,.03);
+    }
+
+    .btn-accent {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 14px;
+      padding: .75rem 1rem;
+      font-weight: 700;
+    }
+
+    .btn-accent:hover {
+      background: var(--accent-2);
+      color: #fff;
+    }
+
+    .btn-soft {
+      border-radius: 14px;
+      border: 1px solid #d9e3ef;
+      background: #fff;
+      color: #1e293b;
+      font-weight: 600;
+    }
+
+    .btn-soft:hover {
+      background: #f8fafc;
+    }
+
+    .page-title {
+      font-weight: 800;
+      letter-spacing: -0.03em;
+    }
+
+    .subtle {
+      color: var(--text-muted);
+    }
+
+    .status-badge {
+      display: inline-flex;
+      padding: .35rem .75rem;
+      border-radius: 999px;
+      font-size: .82rem;
+      font-weight: 700;
+    }
+
+    .status-pendiente {
+      background: #fff4db;
+      color: #b45309;
+    }
+
+    .status-entregado {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .table-actions button {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+      background: #fff;
+      transition: transform .15s ease, background .15s ease;
+    }
+
+    .table-actions button:hover {
+      transform: translateY(-1px);
+      background: #f8fafc;
+    }
+
+    .empty-state {
+      padding: 2rem 1rem;
+      text-align: center;
+      color: var(--text-muted);
+    }
+
+    .modal-content {
+      border: 0;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .modal-header {
+      background: #0f172a;
+      color: #fff;
+    }
+
+    .form-label {
+      font-weight: 700;
+      color: #334155;
+    }
+
+    .form-control,
+    .form-select {
+      border-radius: 14px;
+      border: 1px solid #d9e3ef;
+      padding: .8rem .95rem;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+      box-shadow: 0 0 0 .2rem rgba(0, 82, 204, .12);
+      border-color: #84aef5;
+    }
+
+    @media (max-width: 991.98px) {
+      .navbar-collapse {
+        padding-top: 1rem;
+      }
+      .nav-link.app-link {
+        margin-right: 0;
+        margin-bottom: .35rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header oscuro principal del dashboard -->
+  <nav class="navbar navbar-expand-lg topbar sticky-top">
+    <div class="container-fluid px-3 px-lg-4">
+      <a class="navbar-brand d-flex align-items-center gap-3 text-white fw-bold" href="#" onclick="showView('dashboardView')">
+        <span class="brand-badge"><i class="fa-solid fa-fire-flame-curved"></i></span>
+        <span>Paway Gas</span>
+      </a>
+
+      <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#mainMenu" aria-controls="mainMenu" aria-expanded="false" aria-label="Menú">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="mainMenu">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item"><a class="nav-link app-link active" href="#" onclick="showView('dashboardView', this)">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link app-link" href="#" onclick="showView('productosView', this)">Productos</a></li>
+          <li class="nav-item"><a class="nav-link app-link" href="#" onclick="showView('pedidosView', this)">Pedidos</a></li>
+          <li class="nav-item"><a class="nav-link app-link" href="#" onclick="showView('repartidoresView', this)">Repartidores</a></li>
+          <li class="nav-item"><a class="nav-link app-link" href="#" onclick="showView('pagosView', this)">Pagos</a></li>
+          <li class="nav-item"><a class="nav-link app-link" href="#" onclick="showView('reportesView', this)">Reportes</a></li>
+        </ul>
+        <div class="d-flex align-items-center text-white-50 fw-semibold">
+          <i class="fa-solid fa-user-shield me-2 text-white"></i> Admin
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container-fluid px-3 px-lg-4 py-4">
+    <!-- DASHBOARD -->
+    <section id="dashboardView" class="view active">
+      <div class="hero p-4 p-lg-5 mb-4">
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-start gap-3">
+          <div>
+            <h1 class="page-title mb-2">Panel administrativo</h1>
+            <p class="subtle mb-0">SPA simulada en el navegador con estado en memoria, sin backend real.</p>
+          </div>
+          <div class="d-flex gap-2 flex-wrap">
+            <button class="btn btn-soft" onclick="showView('productosView')"><i class="fa-solid fa-boxes-stacked me-2"></i>Ver productos</button>
+            <button class="btn btn-accent" onclick="showView('pedidosView')"><i class="fa-solid fa-clipboard-list me-2"></i>Gestionar pedidos</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-3 g-xl-4 mb-4">
+        <div class="col-12 col-md-6 col-xl-3">
+          <div class="metric-card p-4 d-flex align-items-center justify-content-between">
+            <div>
+              <div class="subtle mb-2">Productos</div>
+              <h3 id="countProductos" class="mb-0 fw-bold">0</h3>
+            </div>
+            <span class="metric-icon blue"><i class="fa-solid fa-box"></i></span>
+          </div>
+        </div>
+        <div class="col-12 col-md-6 col-xl-3">
+          <div class="metric-card p-4 d-flex align-items-center justify-content-between">
+            <div>
+              <div class="subtle mb-2">Pedidos</div>
+              <h3 id="countPedidos" class="mb-0 fw-bold">0</h3>
+            </div>
+            <span class="metric-icon orange"><i class="fa-solid fa-receipt"></i></span>
+          </div>
+        </div>
+        <div class="col-12 col-md-6 col-xl-3">
+          <div class="metric-card p-4 d-flex align-items-center justify-content-between">
+            <div>
+              <div class="subtle mb-2">Pendientes</div>
+              <h3 id="countPendientes" class="mb-0 fw-bold">0</h3>
+            </div>
+            <span class="metric-icon green"><i class="fa-solid fa-truck-fast"></i></span>
+          </div>
+        </div>
+        <div class="col-12 col-md-6 col-xl-3">
+          <div class="metric-card p-4 d-flex align-items-center justify-content-between">
+            <div>
+              <div class="subtle mb-2">Repartidores</div>
+              <h3 id="countRepartidores" class="mb-0 fw-bold">0</h3>
+            </div>
+            <span class="metric-icon red"><i class="fa-solid fa-motorcycle"></i></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-card p-4">
+        <h2 class="h4 fw-bold mb-2">Resumen académico</h2>
+        <p class="subtle mb-0">Este panel usa arrays JavaScript, render dinámico y modales de Bootstrap para simular operaciones CRUD completas.</p>
+      </div>
+    </section>
+
+    <!-- PRODUCTOS -->
+    <section id="productosView" class="view">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-3">
+        <div>
+          <h1 class="page-title mb-1">Productos</h1>
+          <p class="subtle mb-0">CRUD en memoria con búsqueda en tiempo real.</p>
+        </div>
+        <button class="btn btn-accent" onclick="openModal('producto')"><i class="fa-solid fa-plus me-2"></i>Agregar nuevo</button>
+      </div>
+
+      <div class="section-card p-3 p-lg-4 mb-4">
+        <label class="form-label" for="buscarProducto">Buscar producto</label>
+        <input type="text" id="buscarProducto" class="form-control search-input" placeholder="Escribe para filtrar..." onkeyup="renderProductos()">
+      </div>
+
+      <div class="section-card p-3 p-lg-4">
+        <div class="table-responsive">
+          <table class="table align-middle mb-0">
+            <thead>
+              <tr>
+                <th style="width: 70px;">ID</th>
+                <th>Nombre</th>
+                <th style="width: 160px;">Precio</th>
+                <th style="width: 120px;">Stock</th>
+                <th style="width: 120px;">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyProductos"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- PEDIDOS -->
+    <section id="pedidosView" class="view">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-3">
+        <div>
+          <h1 class="page-title mb-1">Pedidos</h1>
+          <p class="subtle mb-0">Estados Pendiente / Entregado, con edición y eliminación en memoria.</p>
+        </div>
+        <button class="btn btn-accent" onclick="openModal('pedido')"><i class="fa-solid fa-plus me-2"></i>Agregar nuevo</button>
+      </div>
+
+      <div class="section-card p-3 p-lg-4 mb-4">
+        <label class="form-label" for="buscarPedido">Buscar pedido</label>
+        <input type="text" id="buscarPedido" class="form-control search-input" placeholder="Cliente, dirección o estado..." onkeyup="renderPedidos()">
+      </div>
+
+      <div class="section-card p-3 p-lg-4">
+        <div class="table-responsive">
+          <table class="table align-middle mb-0">
+            <thead>
+              <tr>
+                <th style="width: 70px;">ID</th>
+                <th>Cliente</th>
+                <th>Dirección</th>
+                <th style="width: 160px;">Estado</th>
+                <th style="width: 140px;">Total</th>
+                <th style="width: 120px;">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyPedidos"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- REPARTIDORES -->
+    <section id="repartidoresView" class="view">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-3">
+        <div>
+          <h1 class="page-title mb-1">Repartidores</h1>
+          <p class="subtle mb-0">Gestión de conductores y sus placas de vehículo.</p>
+        </div>
+        <button class="btn btn-accent" onclick="openModal('repartidor')"><i class="fa-solid fa-plus me-2"></i>Agregar nuevo</button>
+      </div>
+
+      <div class="section-card p-3 p-lg-4 mb-4">
+        <label class="form-label" for="buscarRepartidor">Buscar repartidor</label>
+        <input type="text" id="buscarRepartidor" class="form-control search-input" placeholder="Nombre, teléfono o placa..." onkeyup="renderRepartidores()">
+      </div>
+
+      <div class="section-card p-3 p-lg-4">
+        <div class="table-responsive">
+          <table class="table align-middle mb-0">
+            <thead>
+              <tr>
+                <th style="width: 70px;">ID</th>
+                <th>Nombre</th>
+                <th style="width: 170px;">Teléfono</th>
+                <th style="width: 160px;">Placa</th>
+                <th style="width: 120px;">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyRepartidores"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- PAGOS -->
+    <section id="pagosView" class="view">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-3">
+        <div>
+          <h1 class="page-title mb-1">Pagos</h1>
+          <p class="subtle mb-0">Registro simulado de pagos asociados a pedidos.</p>
+        </div>
+        <button class="btn btn-accent" onclick="openModal('pago')"><i class="fa-solid fa-plus me-2"></i>Registrar pago</button>
+      </div>
+
+      <div class="row g-3 g-xl-4 mb-4">
+        <div class="col-12 col-md-4">
+          <div class="metric-card p-4 d-flex align-items-center justify-content-between">
+            <div>
+              <div class="subtle mb-2">Pagos registrados</div>
+              <h3 id="countPagos" class="mb-0 fw-bold">0</h3>
+            </div>
+            <span class="metric-icon blue"><i class="fa-solid fa-money-bill-wave"></i></span>
+          </div>
+        </div>
+        <div class="col-12 col-md-4">
+          <div class="metric-card p-4 d-flex align-items-center justify-content-between">
+            <div>
+              <div class="subtle mb-2">Total recaudado</div>
+              <h3 id="totalPagos" class="mb-0 fw-bold">S/ 0.00</h3>
+            </div>
+            <span class="metric-icon green"><i class="fa-solid fa-sack-dollar"></i></span>
+          </div>
+        </div>
+        <div class="col-12 col-md-4">
+          <div class="metric-card p-4 d-flex align-items-center justify-content-between">
+            <div>
+              <div class="subtle mb-2">Pago promedio</div>
+              <h3 id="promedioPagos" class="mb-0 fw-bold">S/ 0.00</h3>
+            </div>
+            <span class="metric-icon orange"><i class="fa-solid fa-calculator"></i></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-card p-3 p-lg-4 mb-4">
+        <label class="form-label" for="buscarPago">Buscar pago</label>
+        <input type="text" id="buscarPago" class="form-control search-input" placeholder="Pedido, método o monto..." onkeyup="renderPagos()">
+      </div>
+
+      <div class="section-card p-3 p-lg-4">
+        <div class="table-responsive">
+          <table class="table align-middle mb-0">
+            <thead>
+              <tr>
+                <th style="width: 70px;">ID</th>
+                <th>Pedido</th>
+                <th style="width: 170px;">Método</th>
+                <th style="width: 140px;">Monto</th>
+                <th style="width: 120px;">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyPagos"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- REPORTES -->
+    <section id="reportesView" class="view">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-3">
+        <div>
+          <h1 class="page-title mb-1">Reportes</h1>
+          <p class="subtle mb-0">Resumen operativo generado desde los arrays en memoria.</p>
+        </div>
+        <button class="btn btn-soft" onclick="renderReportes()"><i class="fa-solid fa-rotate me-2"></i>Actualizar resumen</button>
+      </div>
+
+      <div class="section-card p-3 p-lg-4 mb-4">
+        <div class="row g-3">
+          <div class="col-12 col-md-6">
+            <label class="form-label" for="reporteDesde">Desde</label>
+            <input type="date" id="reporteDesde" class="form-control" onchange="renderReportes()">
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label" for="reporteHasta">Hasta</label>
+            <input type="date" id="reporteHasta" class="form-control" onchange="renderReportes()">
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-3 g-xl-4 mb-4">
+        <div class="col-12 col-lg-6">
+          <div class="section-card p-4 h-100">
+            <h2 class="h5 fw-bold mb-3">Resumen</h2>
+            <div class="d-flex justify-content-between py-2 border-bottom"><span>Pedidos en el período</span><strong id="repPedidosPeriodo">0</strong></div>
+            <div class="d-flex justify-content-between py-2 border-bottom"><span>Ventas totales (pagos)</span><strong id="repVentasPeriodo">S/ 0.00</strong></div>
+            <div class="d-flex justify-content-between py-2"><span>Pedidos pendientes</span><strong id="repPendientes">0</strong></div>
+          </div>
+        </div>
+        <div class="col-12 col-lg-6">
+          <div class="section-card p-4 h-100">
+            <h2 class="h5 fw-bold mb-3">Entregas por repartidor</h2>
+            <div class="table-responsive">
+              <table class="table align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th>Repartidor</th>
+                    <th>Entregados</th>
+                    <th>Total S/.</th>
+                  </tr>
+                </thead>
+                <tbody id="tbodyReporteRepartidores"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-card p-3 p-lg-4">
+        <h2 class="h5 fw-bold mb-3">Pedidos dentro del período</h2>
+        <div class="table-responsive">
+          <table class="table align-middle mb-0">
+            <thead>
+              <tr>
+                <th>Cliente</th>
+                <th>Estado</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyReportePedidos"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Modal inteligente: el mismo modal sirve para crear y editar.
+       La clave está en el hidden #entidadId y en #entidadTipo. -->
+  <div class="modal fade" id="crudModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div>
+            <h5 class="modal-title fw-bold mb-0" id="modalTitle">Agregar</h5>
+            <small class="opacity-75" id="modalSubtitle">Completa el formulario y guarda en memoria.</small>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body p-4">
+          <form id="crudForm">
+            <input type="hidden" id="entidadId" />
+            <input type="hidden" id="entidadTipo" />
+
+            <div id="camposProducto" class="row g-3 d-none">
+              <div class="col-md-6">
+                <label class="form-label" for="productoNombre">Nombre</label>
+                <input type="text" id="productoNombre" class="form-control" required>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label" for="productoPrecio">Precio</label>
+                <input type="number" step="0.01" min="0" id="productoPrecio" class="form-control" required>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label" for="productoStock">Stock</label>
+                <input type="number" min="0" id="productoStock" class="form-control" required>
+              </div>
+            </div>
+
+            <div id="camposPedido" class="row g-3 d-none">
+              <div class="col-md-6">
+                <label class="form-label" for="pedidoCliente">Cliente</label>
+                <input type="text" id="pedidoCliente" class="form-control" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="pedidoDireccion">Dirección</label>
+                <input type="text" id="pedidoDireccion" class="form-control" required>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label" for="pedidoEstado">Estado</label>
+                <select id="pedidoEstado" class="form-select" required>
+                  <option value="Pendiente">Pendiente</option>
+                  <option value="Entregado">Entregado</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label" for="pedidoTotal">Total</label>
+                <input type="number" step="0.01" min="0" id="pedidoTotal" class="form-control" required>
+              </div>
+            </div>
+
+            <div id="camposRepartidor" class="row g-3 d-none">
+              <div class="col-md-4">
+                <label class="form-label" for="repartidorNombre">Nombre</label>
+                <input type="text" id="repartidorNombre" class="form-control" required>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label" for="repartidorTelefono">Teléfono</label>
+                <input type="text" id="repartidorTelefono" class="form-control" required>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label" for="repartidorPlaca">Placa del vehículo</label>
+                <input type="text" id="repartidorPlaca" class="form-control" required>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer px-4 pb-4 pt-0 border-0">
+          <button type="button" class="btn btn-soft" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-accent" onclick="saveEntidad()"><i class="fa-solid fa-floppy-disk me-2"></i>Guardar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    /* ===============================
+       Estado en Memoria
+       ===============================
+       Estas colecciones simulan una base de datos, pero viven solo en RAM.
+       Al recargar la página se reinician, lo cual es perfecto para una SPA
+       académica sin backend real.
+    */
+    let productos = [
+      { id: 1, nombre: 'Balón de Gas 10kg', precio: 45.00, stock: 48 },
+      { id: 2, nombre: 'Balón de Gas 15kg', precio: 65.00, stock: 30 },
+      { id: 3, nombre: 'Balón de Gas 5kg', precio: 28.00, stock: 39 }
+    ];
+
+    let pedidos = [
+      { id: 1, cliente: 'Antony', direccion: 'Av. Principal 123', estado: 'Pendiente', total: 90.00 },
+      { id: 2, cliente: 'María Quispe', direccion: 'Jr. Los Robles 456', estado: 'Entregado', total: 28.00 },
+      { id: 3, cliente: 'Carlos López', direccion: 'Psje. Los Nardos 789', estado: 'Pendiente', total: 65.00 }
+    ];
+
+    let repartidores = [
+      { id: 1, nombre: 'Luis Pérez', telefono: '999-111-222', placa: 'ABC-123' },
+      { id: 2, nombre: 'Rosa Medina', telefono: '988-222-333', placa: 'DEF-456' },
+      { id: 3, nombre: 'Kevin Torres', telefono: '977-333-444', placa: 'GHI-789' }
+    ];
+
+    let pagos = [
+      { id: 1, pedido: 'Pedido #1 - Antony', metodo: 'Efectivo', monto: 90.00 },
+      { id: 2, pedido: 'Pedido #2 - María Quispe', metodo: 'Yape', monto: 28.00 },
+      { id: 3, pedido: 'Pedido #3 - Carlos López', metodo: 'Transferencia', monto: 65.00 }
+    ];
+
+    let modalInstance = null;
+
+    const modal = document.getElementById('crudModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalSubtitle = document.getElementById('modalSubtitle');
+    const entidadId = document.getElementById('entidadId');
+    const entidadTipo = document.getElementById('entidadTipo');
+
+    const camposProducto = document.getElementById('camposProducto');
+    const camposPedido = document.getElementById('camposPedido');
+    const camposRepartidor = document.getElementById('camposRepartidor');
+
+    const bootstrapModal = () => {
+      if (!modalInstance) modalInstance = new bootstrap.Modal(modal);
+      return modalInstance;
+    };
+
+    /* ===============================
+       Navegación SPA Fake
+       ===============================
+       Solo mostramos la vista activa; las demás quedan ocultas.
+       Esto simula una SPA real sin usar frameworks.
+    */
+    function showView(viewId, linkElement = null) {
+      document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
+      document.getElementById(viewId).classList.add('active');
+
+      document.querySelectorAll('.nav-link.app-link').forEach(link => link.classList.remove('active'));
+      if (linkElement) linkElement.classList.add('active');
+    }
+
+    function money(value) {
+      return new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(value);
+    }
+
+    function setVisibleFields(tipo) {
+      camposProducto.classList.add('d-none');
+      camposPedido.classList.add('d-none');
+      camposRepartidor.classList.add('d-none');
+
+      if (tipo === 'producto') camposProducto.classList.remove('d-none');
+      if (tipo === 'pedido') camposPedido.classList.remove('d-none');
+      if (tipo === 'repartidor') camposRepartidor.classList.remove('d-none');
+    }
+
+    /* ===============================
+       Lógica del Modal Inteligente
+       ===============================
+       Un solo modal para crear y editar.
+       - entidadId vacío  => INSERT
+       - entidadId con valor => UPDATE
+       El campo oculto entidadTipo define qué array modificar.
+    */
+    function openModal(tipo, id = null) {
+      entidadTipo.value = tipo;
+      entidadId.value = id ?? '';
+      setVisibleFields(tipo);
+
+      const isEdit = id !== null;
+      modalTitle.textContent = isEdit ? `Editar ${labelTipo(tipo)}` : `Agregar ${labelTipo(tipo)}`;
+      modalSubtitle.textContent = isEdit ? 'Actualiza los campos y guarda el cambio en memoria.' : 'Completa el formulario y agrega el registro al array.';
+
+      clearFields(tipo);
+      if (isEdit) fillModal(tipo, id);
+      bootstrapModal().show();
+    }
+
+    function labelTipo(tipo) {
+      return tipo === 'producto' ? 'Producto' : tipo === 'pedido' ? 'Pedido' : 'Repartidor';
+    }
+
+    function clearFields(tipo) {
+      document.getElementById('crudForm').reset();
+      if (tipo === 'producto') {
+        document.getElementById('productoNombre').value = '';
+        document.getElementById('productoPrecio').value = '';
+        document.getElementById('productoStock').value = '';
+      }
+      if (tipo === 'pedido') {
+        document.getElementById('pedidoCliente').value = '';
+        document.getElementById('pedidoDireccion').value = '';
+        document.getElementById('pedidoEstado').value = 'Pendiente';
+        document.getElementById('pedidoTotal').value = '';
+      }
+      if (tipo === 'repartidor') {
+        document.getElementById('repartidorNombre').value = '';
+        document.getElementById('repartidorTelefono').value = '';
+        document.getElementById('repartidorPlaca').value = '';
+      }
+    }
+
+    function fillModal(tipo, id) {
+      const item = getArrayByType(tipo).find(elemento => elemento.id === id);
+      if (!item) return;
+
+      if (tipo === 'producto') {
+        document.getElementById('productoNombre').value = item.nombre;
+        document.getElementById('productoPrecio').value = item.precio;
+        document.getElementById('productoStock').value = item.stock;
+      }
+
+      if (tipo === 'pedido') {
+        document.getElementById('pedidoCliente').value = item.cliente;
+        document.getElementById('pedidoDireccion').value = item.direccion;
+        document.getElementById('pedidoEstado').value = item.estado;
+        document.getElementById('pedidoTotal').value = item.total;
+      }
+
+      if (tipo === 'repartidor') {
+        document.getElementById('repartidorNombre').value = item.nombre;
+        document.getElementById('repartidorTelefono').value = item.telefono;
+        document.getElementById('repartidorPlaca').value = item.placa;
+      }
+    }
+
+    function getArrayByType(tipo) {
+      if (tipo === 'producto') return productos;
+      if (tipo === 'pedido') return pedidos;
+      if (tipo === 'pago') return pagos;
+      return repartidores;
+    }
+
+    function saveEntidad() {
+      const tipo = entidadTipo.value;
+      const id = entidadId.value ? Number(entidadId.value) : null;
+      const arr = getArrayByType(tipo);
+
+      if (tipo === 'producto') {
+        const nombre = document.getElementById('productoNombre').value.trim();
+        const precio = Number(document.getElementById('productoPrecio').value);
+        const stock = Number(document.getElementById('productoStock').value);
+        const payload = { nombre, precio, stock };
+        persistEntidad(arr, tipo, id, payload);
+      }
+
+      if (tipo === 'pedido') {
+        const cliente = document.getElementById('pedidoCliente').value.trim();
+        const direccion = document.getElementById('pedidoDireccion').value.trim();
+        const estado = document.getElementById('pedidoEstado').value;
+        const total = Number(document.getElementById('pedidoTotal').value);
+        const payload = { cliente, direccion, estado, total };
+        persistEntidad(arr, tipo, id, payload);
+      }
+
+      if (tipo === 'repartidor') {
+        const nombre = document.getElementById('repartidorNombre').value.trim();
+        const telefono = document.getElementById('repartidorTelefono').value.trim();
+        const placa = document.getElementById('repartidorPlaca').value.trim();
+        const payload = { nombre, telefono, placa };
+        persistEntidad(arr, tipo, id, payload);
+      }
+
+      if (tipo === 'pago') {
+        const pedido = document.getElementById('pagoPedido').value.trim();
+        const metodo = document.getElementById('pagoMetodo').value;
+        const monto = Number(document.getElementById('pagoMonto').value);
+        const payload = { pedido, metodo, monto };
+        persistEntidad(arr, tipo, id, payload);
+      }
+
+      bootstrapModal().hide();
+    }
+
+    /* ===============================
+       Manipulación del DOM
+       ===============================
+       Aquí convertimos los arrays a HTML usando Template Literals y los inyectamos
+       directamente en cada <tbody>.
+    */
+    function persistEntidad(arr, tipo, id, payload) {
+      if (id) {
+        const index = arr.findIndex(item => item.id === id);
+        arr[index] = { ...arr[index], ...payload };
+      } else {
+        const nextId = arr.length ? Math.max(...arr.map(item => item.id)) + 1 : 1;
+        arr.unshift({ id: nextId, ...payload });
+      }
+
+      renderAll();
+    }
+
+    function deleteEntidad(tipo, id) {
+      const mensaje = `¿Seguro que deseas eliminar este ${labelTipo(tipo).toLowerCase()}?`;
+      if (!confirm(mensaje)) return;
+
+      const arr = getArrayByType(tipo);
+      const index = arr.findIndex(item => item.id === id);
+      if (index !== -1) {
+        arr.splice(index, 1);
+      }
+      renderAll();
+    }
+
+    function renderProductos() {
+      const filtro = document.getElementById('buscarProducto').value.toLowerCase();
+      const data = productos.filter(item =>
+        item.nombre.toLowerCase().includes(filtro)
+      );
+
+      const tbody = document.getElementById('tbodyProductos');
+      tbody.innerHTML = data.length ? data.map(producto => `
+        <tr>
+          <td>${producto.id}</td>
+          <td><strong>${producto.nombre}</strong></td>
+          <td>${money(producto.precio)}</td>
+          <td>${producto.stock}</td>
+          <td>
+            <div class="table-actions d-flex gap-2">
+              <button type="button" title="Editar" onclick="openModal('producto', ${producto.id})"><i class="fa-solid fa-pen text-primary"></i></button>
+              <button type="button" title="Eliminar" onclick="deleteEntidad('producto', ${producto.id})"><i class="fa-solid fa-trash text-danger"></i></button>
+            </div>
+          </td>
+        </tr>
+      `).join('') : `<tr><td colspan="5"><div class="empty-state">No hay productos que coincidan con la búsqueda.</div></td></tr>`;
+    }
+
+    function renderPedidos() {
+      const filtro = document.getElementById('buscarPedido').value.toLowerCase();
+      const data = pedidos.filter(item =>
+        item.cliente.toLowerCase().includes(filtro) ||
+        item.direccion.toLowerCase().includes(filtro) ||
+        item.estado.toLowerCase().includes(filtro)
+      );
+
+      const tbody = document.getElementById('tbodyPedidos');
+      tbody.innerHTML = data.length ? data.map(pedido => `
+        <tr>
+          <td>${pedido.id}</td>
+          <td><strong>${pedido.cliente}</strong></td>
+          <td>${pedido.direccion}</td>
+          <td><span class="status-badge ${pedido.estado === 'Entregado' ? 'status-entregado' : 'status-pendiente'}">${pedido.estado}</span></td>
+          <td>${money(pedido.total)}</td>
+          <td>
+            <div class="table-actions d-flex gap-2">
+              <button type="button" title="Editar" onclick="openModal('pedido', ${pedido.id})"><i class="fa-solid fa-pen text-primary"></i></button>
+              <button type="button" title="Eliminar" onclick="deleteEntidad('pedido', ${pedido.id})"><i class="fa-solid fa-trash text-danger"></i></button>
+            </div>
+          </td>
+        </tr>
+      `).join('') : `<tr><td colspan="6"><div class="empty-state">No hay pedidos que coincidan con la búsqueda.</div></td></tr>`;
+    }
+
+    function renderRepartidores() {
+      const filtro = document.getElementById('buscarRepartidor').value.toLowerCase();
+      const data = repartidores.filter(item =>
+        item.nombre.toLowerCase().includes(filtro) ||
+        item.telefono.toLowerCase().includes(filtro) ||
+        item.placa.toLowerCase().includes(filtro)
+      );
+
+      const tbody = document.getElementById('tbodyRepartidores');
+      tbody.innerHTML = data.length ? data.map(repartidor => `
+        <tr>
+          <td>${repartidor.id}</td>
+          <td><strong>${repartidor.nombre}</strong></td>
+          <td>${repartidor.telefono}</td>
+          <td>${repartidor.placa}</td>
+          <td>
+            <div class="table-actions d-flex gap-2">
+              <button type="button" title="Editar" onclick="openModal('repartidor', ${repartidor.id})"><i class="fa-solid fa-pen text-primary"></i></button>
+              <button type="button" title="Eliminar" onclick="deleteEntidad('repartidor', ${repartidor.id})"><i class="fa-solid fa-trash text-danger"></i></button>
+            </div>
+          </td>
+        </tr>
+      `).join('') : `<tr><td colspan="5"><div class="empty-state">No hay repartidores que coincidan con la búsqueda.</div></td></tr>`;
+    }
+
+    function renderPagos() {
+      const filtro = document.getElementById('buscarPago').value.toLowerCase();
+      const data = pagos.filter(item =>
+        item.pedido.toLowerCase().includes(filtro) ||
+        item.metodo.toLowerCase().includes(filtro) ||
+        String(item.monto).includes(filtro)
+      );
+
+      const total = pagos.reduce((acumulado, item) => acumulado + item.monto, 0);
+      const promedio = pagos.length ? total / pagos.length : 0;
+
+      document.getElementById('countPagos').textContent = pagos.length;
+      document.getElementById('totalPagos').textContent = money(total);
+      document.getElementById('promedioPagos').textContent = money(promedio);
+
+      const tbody = document.getElementById('tbodyPagos');
+      tbody.innerHTML = data.length ? data.map(pago => `
+        <tr>
+          <td>${pago.id}</td>
+          <td><strong>${pago.pedido}</strong></td>
+          <td>${pago.metodo}</td>
+          <td>${money(pago.monto)}</td>
+          <td>
+            <div class="table-actions d-flex gap-2">
+              <button type="button" title="Editar" onclick="openModal('pago', ${pago.id})"><i class="fa-solid fa-pen text-primary"></i></button>
+              <button type="button" title="Eliminar" onclick="deleteEntidad('pago', ${pago.id})"><i class="fa-solid fa-trash text-danger"></i></button>
+            </div>
+          </td>
+        </tr>
+      `).join('') : `<tr><td colspan="5"><div class="empty-state">No hay pagos que coincidan con la búsqueda.</div></td></tr>`;
+    }
+
+    function getReportFilteredPedidos() {
+      const desde = document.getElementById('reporteDesde').value;
+      const hasta = document.getElementById('reporteHasta').value;
+
+      return pedidos.filter(pedido => {
+        const fechaSimulada = new Date('2026-06-30T00:00:00');
+        const fechaMin = desde ? new Date(`${desde}T00:00:00`) : null;
+        const fechaMax = hasta ? new Date(`${hasta}T23:59:59`) : null;
+
+        if (fechaMin && fechaSimulada < fechaMin) return false;
+        if (fechaMax && fechaSimulada > fechaMax) return false;
+        return true;
+      });
+    }
+
+    function renderReportes() {
+      const pedidosFiltrados = getReportFilteredPedidos();
+      const pedidosPendientes = pedidos.filter(pedido => pedido.estado === 'Pendiente').length;
+      const totalVentas = pagos.reduce((acumulado, item) => acumulado + item.monto, 0);
+
+      document.getElementById('repPedidosPeriodo').textContent = pedidosFiltrados.length;
+      document.getElementById('repVentasPeriodo').textContent = money(totalVentas);
+      document.getElementById('repPendientes').textContent = pedidosPendientes;
+
+      const tbodyPedidos = document.getElementById('tbodyReportePedidos');
+      tbodyPedidos.innerHTML = pedidosFiltrados.length ? pedidosFiltrados.map(pedido => `
+        <tr>
+          <td><strong>${pedido.cliente}</strong></td>
+          <td><span class="status-badge ${pedido.estado === 'Entregado' ? 'status-entregado' : 'status-pendiente'}">${pedido.estado}</span></td>
+          <td>${money(pedido.total)}</td>
+        </tr>
+      `).join('') : `<tr><td colspan="3"><div class="empty-state">Sin pedidos en el período seleccionado.</div></td></tr>`;
+
+      const entregasPorRepartidor = repartidores.map((repartidor, index) => ({
+        nombre: repartidor.nombre,
+        entregados: index < pedidosFiltrados.length ? 1 : 0,
+        total: index < pagos.length ? pagos[index].monto : 0
+      }));
+
+      const tbodyRepartidores = document.getElementById('tbodyReporteRepartidores');
+      tbodyRepartidores.innerHTML = entregasPorRepartidor.length ? entregasPorRepartidor.map(item => `
+        <tr>
+          <td><strong>${item.nombre}</strong></td>
+          <td>${item.entregados}</td>
+          <td>${money(item.total)}</td>
+        </tr>
+      `).join('') : `<tr><td colspan="3"><div class="empty-state">Sin entregas registradas.</div></td></tr>`;
+    }
+
+    function renderDashboard() {
+      document.getElementById('countProductos').textContent = productos.length;
+      document.getElementById('countPedidos').textContent = pedidos.length;
+      document.getElementById('countPendientes').textContent = pedidos.filter(pedido => pedido.estado === 'Pendiente').length;
+      document.getElementById('countRepartidores').textContent = repartidores.length;
+    }
+
+    function renderAll() {
+      renderDashboard();
+      renderProductos();
+      renderPedidos();
+      renderRepartidores();
+      renderPagos();
+      renderReportes();
+    }
+
+    // Campos extra del modal para la entidad pago.
+    const pagosCampos = document.createElement('div');
+    pagosCampos.id = 'camposPago';
+    pagosCampos.className = 'row g-3 d-none';
+    pagosCampos.innerHTML = `
+      <div class="col-md-6">
+        <label class="form-label" for="pagoPedido">Pedido</label>
+        <input type="text" id="pagoPedido" class="form-control" required>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label" for="pagoMetodo">Método</label>
+        <select id="pagoMetodo" class="form-select" required>
+          <option value="Efectivo">Efectivo</option>
+          <option value="Yape">Yape</option>
+          <option value="Transferencia">Transferencia</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label" for="pagoMonto">Monto</label>
+        <input type="number" step="0.01" min="0" id="pagoMonto" class="form-control" required>
+      </div>
+    `;
+    document.getElementById('crudForm').appendChild(pagosCampos);
+
+    const originalSetVisibleFields = setVisibleFields;
+    setVisibleFields = function(tipo) {
+      originalSetVisibleFields(tipo);
+      pagosCampos.classList.add('d-none');
+      if (tipo === 'pago') pagosCampos.classList.remove('d-none');
+    };
+
+    const originalClearFields = clearFields;
+    clearFields = function(tipo) {
+      originalClearFields(tipo);
+      if (tipo === 'pago') {
+        document.getElementById('pagoPedido').value = '';
+        document.getElementById('pagoMetodo').value = 'Efectivo';
+        document.getElementById('pagoMonto').value = '';
+      }
+    };
+
+    const originalFillModal = fillModal;
+    fillModal = function(tipo, id) {
+      originalFillModal(tipo, id);
+      if (tipo === 'pago') {
+        const item = pagos.find(elemento => elemento.id === id);
+        if (!item) return;
+        document.getElementById('pagoPedido').value = item.pedido;
+        document.getElementById('pagoMetodo').value = item.metodo;
+        document.getElementById('pagoMonto').value = item.monto;
+      }
+    };
+
+    // Inicialización de la SPA fake al cargar la página.
+    document.addEventListener('DOMContentLoaded', () => {
+      renderAll();
+      showView('dashboardView', document.querySelector('.nav-link.app-link.active'));
+    });
+  </script>
+</body>
+</html>
