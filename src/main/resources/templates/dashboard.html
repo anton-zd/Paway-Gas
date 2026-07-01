@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Paway Gas</title>
+    <link rel="stylesheet" th:href="@{/style.css}">
+    <link rel="stylesheet" th:href="@{/responsive.css}">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <header class="top-nav">
+        <div class="nav-left">
+            <div class="logo">
+                <i class="fas fa-fire-alt"></i>
+            </div>
+            <h1>Paway Gas</h1>
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="#" class="active">Dashboard</a></li>
+                    <li><a href="#">Productos</a></li>
+                    <li><a href="#">Repartidores</a></li>
+                    <li><a href="#">Pedidos</a></li>
+                    <li><a href="#">Pagos</a></li>
+                    <li><a href="#">Reportes</a></li>
+                </ul>
+            </nav>
+        </div>
+        <div class="nav-right">
+            <a href="#" class="admin-link">
+                <i class="fas fa-user-circle"></i>
+                <span>Admin</span>
+            </a>
+            <form th:action="@{/logout}" method="post" style="display: inline;">
+                <button type="submit" class="logout-link" style="background:none; border:none; color:white; cursor:pointer; display:flex; align-items:center;">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Salir</span>
+                </button>
+            </form>
+        </div>
+        <button class="mobile-menu-toggle">
+            <i class="fas fa-bars"></i>
+        </button>
+    </header>
+
+    <main class="main-content">
+        <h2 class="main-title">Panel administrativo</h2>
+        <div class="dashboard-grid">
+            <div class="card">
+                <div class="card-content">
+                    <p class="card-title">Pedidos totales</p>
+                    <p class="card-value" th:text="${stats.totalOrders}">0</p>
+                </div>
+                <div class="card-icon">
+                    <i class="fas fa-box-open"></i>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-content">
+                    <p class="card-title">Pendientes</p>
+                    <p class="card-value" th:text="${stats.pendingOrders}">0</p>
+                </div>
+                <div class="card-icon warning">
+                    <i class="fas fa-exclamation-circle"></i>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-content">
+                    <p class="card-title">En camino</p>
+                    <p class="card-value" th:text="${stats.inTransitOrders}">0</p>
+                </div>
+                <div class="card-icon shipping">
+                    <i class="fas fa-truck"></i>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-content">
+                    <p class="card-title">Entregados</p>
+                    <p class="card-value" th:text="${stats.deliveredOrders}">0</p>
+                </div>
+                <div class="card-icon success">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-content">
+                    <p class="card-title">Ventas (pagos)</p>
+                    <p class="card-value" th:text="'S/ ' + ${#numbers.formatDecimal(stats.totalSales, 1, 'COMMA', 2, 'POINT')}">S/ 0.00</p>
+                </div>
+                <div class="card-icon sales">
+                    <i class="fas fa-dollar-sign"></i>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-content">
+                    <p class="card-title">Productos con stock bajo</p>
+                    <p class="card-value" th:text="${stats.lowStockProducts}">0</p>
+                </div>
+                <div class="card-icon danger">
+                    <i class="fas fa-archive"></i>
+                </div>
+            </div>
+        </div>
+
+        <section class="orders-section">
+            <div class="section-header">
+                <h3 class="section-title">Pedidos recientes</h3>
+                <p class="section-subtitle">Datos cargados desde la base de datos mediante DTOs.</p>
+            </div>
+            <div class="table-card">
+                <table class="orders-table">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Cliente</th>
+                            <th>Estado</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="pedido : ${pedidos}">
+                            <td data-label="Fecha" th:text="${#temporals.format(pedido.fechaPedido, 'dd/MM/yyyy HH:mm')}">22/05/2026 05:45 p. m.</td>
+                            <td data-label="Cliente">
+                                <strong th:text="${pedido.cliente.nombreCompleto}">Antony</strong>
+                                <span th:text="${pedido.cliente.telefono}">123.123</span>
+                            </td>
+                            <td data-label="Estado">
+                                <span class="status-badge" th:text="${pedido.estado}">PENDIENTE</span>
+                            </td>
+                            <td data-label="Total" th:text="${'S/ ' + #numbers.formatDecimal(pedido.total, 1, 'COMMA', 2, 'POINT')}">S/ 90.00</td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(pedidos)}">
+                            <td colspan="4" class="empty-state">Sin pedidos registrados</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const menuToggle = document.querySelector('.mobile-menu-toggle');
+            const mainNav = document.querySelector('.main-nav');
+
+            if (menuToggle && mainNav) {
+                menuToggle.addEventListener('click', function () {
+                    mainNav.classList.toggle('active');
+                });
+            }
+        });
+    </script>
+</body>
+</html>
